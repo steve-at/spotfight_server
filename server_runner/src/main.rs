@@ -1,9 +1,9 @@
 use std::convert::Infallible;
 use warp::Filter;
-use std::process::{Command, ExitStatus};
+use std::process::{Command};
 use warp::http::{Method, StatusCode};
 use std::str;
-use std::str::Utf8Error;
+
 use serde_json::json;
 
 
@@ -37,8 +37,9 @@ async fn main() {
             .allow_header("Accept")
             .allow_method(Method::GET))
         .boxed();
+    println!("listening on 0.0.0.0");
     warp::serve(start_session.or(end_session).or(active_sessions))
-        .run(([127, 0, 0, 1], 3030))
+        .run(([0, 0, 0, 0], 3030))
         .await;
 
 }
