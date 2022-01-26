@@ -1,12 +1,10 @@
-use std::collections::HashMap;
 use std::convert::Infallible;
 use warp::Filter;
 use std::process::Command;
 use warp::http::{Method, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::str;
-use std::str::Utf8Error;
-
+use serde_json::json;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Port {
     port: i16
@@ -28,7 +26,7 @@ async fn main() {
             .allow_method(Method::GET))
         .boxed();
     let end_session = warp::get()
-        .and(warp::path("end-session"))
+        .and(warp::path("stop-session"))
         .and(warp::path::param::<String>())
         .and(warp::path::end())
         .and_then(stop_server)
@@ -47,7 +45,7 @@ async fn main() {
             .allow_method(Method::GET))
         .boxed();
     warp::serve(start_session.or(end_session).or(active_sessions))
-        .run(([0, 0, 0, 0], 3030))
+        .run(([127, 0, 0, 1], 3030))
         .await;
 
 }
@@ -55,7 +53,8 @@ async fn main() {
 async fn start_new_server() -> Result<impl warp::Reply, Infallible> {
     match find_unused_port() {
         None => {
-            Ok(warp::reply::with_status("0".to_string(), StatusCode::SERVICE_UNAVAILABLE))
+            let repl = json!({"port": "0"});
+            Ok(warp::reply::with_status(repl.to_string(), StatusCode::SERVICE_UNAVAILABLE))
         }
         Some(port) => {
             let port_argument = format!("PORT={}", &port);
@@ -64,7 +63,8 @@ async fn start_new_server() -> Result<impl warp::Reply, Infallible> {
                 .arg("./server/SpotfightServer.sh")
                 .arg(port_argument.as_str())
                 .spawn();
-            Ok(warp::reply::with_status(port_number, StatusCode::OK))
+            let repl = json!({"port": port_number});
+            Ok(warp::reply::with_status( repl.to_string(),StatusCode::OK))
         }
     }
 }
