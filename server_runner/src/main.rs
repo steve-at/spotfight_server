@@ -79,11 +79,11 @@ async fn stop_server(port: String) -> Result<impl warp::Reply, Infallible> {
                 .arg("-15")
                 .arg(pid_processed)
                 .spawn();
-            let repl = json!({"port": ret_port, "stoped:": true});
+            let repl = json!({"port": ret_port, "stopped:": true});
             Ok(warp::reply::with_status(repl.to_string(), StatusCode::OK))
         }
         None => {
-            let repl = json!({"port": ret_port, "stoped:": false});
+            let repl = json!({"port": ret_port, "stopped:": false});
             Ok(warp::reply::with_status(repl.to_string(), StatusCode::NOT_FOUND))
         }
     }
