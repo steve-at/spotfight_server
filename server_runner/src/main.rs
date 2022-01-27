@@ -5,6 +5,7 @@ use warp::http::{Method, StatusCode};
 use std::str;
 
 use serde_json::json;
+use warp::reply::{json};
 
 
 #[tokio::main]
@@ -35,6 +36,7 @@ async fn main() {
         .with(warp::cors()
             .allow_any_origin()
             .allow_header("Accept")
+            .expose_header("Content-Type")
             .allow_method(Method::GET))
         .boxed();
     println!("listening on 0.0.0.0");
@@ -48,17 +50,17 @@ async fn start_new_server() -> Result<impl warp::Reply, Infallible> {
     match find_unused_port() {
         None => {
             let repl = json!({"port": "0", "success": false});
-            Ok(warp::reply::with_status(repl.to_string(), StatusCode::SERVICE_UNAVAILABLE))
+            Ok(warp::reply::with_status(json(&repl), StatusCode::SERVICE_UNAVAILABLE))
         }
         Some(port) => {
             let port_argument = format!("PORT={}", &port);
-            let port_number = port.to_string();
+            let port_number = port;
             let _ = Command::new("/bin/sh")
                 .arg("./server/SpotfightServer.sh")
                 .arg(port_argument.as_str())
                 .spawn();
             let repl = json!({"port": port_number, "success": true});
-            Ok(warp::reply::with_status( repl.to_string(),StatusCode::OK))
+            Ok(warp::reply::with_status( json(&repl),StatusCode::OK))
         }
     }
 }
@@ -81,11 +83,11 @@ async fn stop_server(port: String) -> Result<impl warp::Reply, Infallible> {
                 .arg(pid_processed)
                 .spawn();
             let repl = json!({"port": ret_port, "stopped:": true});
-            Ok(warp::reply::with_status(repl.to_string(), StatusCode::OK))
+            Ok(warp::reply::with_status(json(&repl), StatusCode::OK))
         }
         None => {
             let repl = json!({"port": ret_port, "stopped:": false});
-            Ok(warp::reply::with_status(repl.to_string(), StatusCode::NOT_FOUND))
+            Ok(warp::reply::with_status(json(&repl), StatusCode::NOT_FOUND))
         }
     }
 
